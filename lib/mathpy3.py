@@ -5,10 +5,9 @@ if sys.version_info[0] < 3:
     raise Exception("You can't use mathpy3 without Python 3.0 or up!")
 
 def __MATHPY3_REPRESENTATION_METHOD_DEFAULT__(x, sig):
-    result = ("%g" % x)
-    if "." in result:
-        tmp = result[result.index("."):]
-        tmp = tmp[:sig]
+    if sig == -1:
+        return str(x)
+    return ("%." + str(sig) + "f") % x
 
 def __MATHPY3_REPRESENTATION_METHOD_SCIENTIFIC__(x, sig):
     y = x
@@ -224,10 +223,10 @@ class Number(numbers.Number):
         return Number(-self.value_)
 
     def __repr__(self):
-        return __mathpy3_representation_method__(self.value_)
+        return __mathpy3_representation_method__(self.value_, __mathpy3_representation_sigdeci__)
 
     def __str__(self):
-        return __mathpy3_representation_method__(self.value_)
+        return __mathpy3_representation_method__(self.value_, __mathpy3_representation_sigdeci__)
 
 __mathpy3_representation_method__ = Number.REPR_DEFAULT
 __mathpy3_representation_sigdeci__ = -1
