@@ -4,7 +4,26 @@ import numbers
 if sys.version_info[0] < 3:
     raise Exception("You can't use mathpy3 without Python 3.0 or up!")
 
+def __MATHPY3_REPRESENTATION_METHOD_DEFAULT__(x, sig):
+    result = ("%g" % x)
+    if "." in result:
+        tmp = result[result.index("."):]
+        tmp = tmp[:sig]
+
+def __MATHPY3_REPRESENTATION_METHOD_SCIENTIFIC__(x, sig):
+    y = x
+    exp = 0
+
+    while y >= 10:
+        exp += 1
+        y /= 10
+
+    return ("%g" % (y)) + "e" + str(exp)
+
 class Number(numbers.Number):
+    REPR_DEFAULT    =    __MATHPY3_REPRESENTATION_METHOD_DEFAULT__
+    REPR_SCIENTIFIC = __MATHPY3_REPRESENTATION_METHOD_SCIENTIFIC__
+
     def __init__(self, value=0):
         self.value_ = value
         self.flags = {
@@ -141,6 +160,18 @@ class Number(numbers.Number):
 
         return Number(result)
 
+    def __pow__(self, o):
+        result = 0
+
+        if isinstance(o, int) or isinstance(o, float):
+            result = self.value_ ** o
+        elif isinstance(o, Number):
+            result = self.value_ ** o.value_
+        else:
+            raise TypeError("Tried to pass non-int/float/Number type.")
+
+        return Number(result)
+
     def __lt__(self, o):
         if isinstance(o, int) or isinstance(o, float):
             return self.value_ < o
@@ -189,8 +220,40 @@ class Number(numbers.Number):
 
         raise TypeError("Tried to pass non-int/float/Number type.")
 
+    def __neg__(self):
+        return Number(-self.value_)
+
     def __repr__(self):
-        return repr(self.value_)
+        return __mathpy3_representation_method__(self.value_)
 
     def __str__(self):
-        return str(self.value_)
+        return __mathpy3_representation_method__(self.value_)
+
+__mathpy3_representation_method__ = Number.REPR_DEFAULT
+__mathpy3_representation_sigdeci__ = -1
+
+def __is_mathpy3_number__(value):
+    if not isinstance(value, Number):
+        raise TypeError("Value was not a mathpy3.Number object.")
+
+    return True
+
+def abs(x):
+    __is_mathpy3_number__(x)  # Verify x's type
+    if x <= 0:
+        return Number(-x)
+    return x.copy()
+
+def sign(x):
+    __is_mathpy3_number__(x)  # Verify x's type
+    if x > 0:
+        return Number(1)
+    elif x < 0:
+        return Number(-1)
+    return Number(0)
+
+def display_mode(mode, decimals=-1):
+    global __mathpy3_representation_method__
+    __mathpy3_representation_method__ = mode
+    global __mathpy3_representation_sigdeci__
+    __mathpy3_representation_sigdeci__ = decimals
